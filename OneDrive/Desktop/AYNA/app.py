@@ -780,7 +780,7 @@ def page_stage1():
     captions = st.session_state.vs_captions
 
     if not st.session_state.vs_done:
-        img_path = os.path.join("assets", "scenes", picture["file"])
+        img_path = img_path = os.path.join(os.path.dirname(__file__), "assets", "scenes", picture["file"])
         if os.path.exists(img_path):
             st.image(img_path, use_container_width=True)
         else:
