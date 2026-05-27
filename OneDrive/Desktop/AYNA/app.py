@@ -1108,6 +1108,7 @@ POSITIVE_WORDS = ["ভালো","সুন্দর","আনন্দ","খু�
                   "ভালোবাসি","মজা","হাসি","উৎসাহ","আশা"]
 
 def analyze_journal_gemini(text: str) -> dict:
+    st.write("DEBUG: Gemini function called")
     """Gemini-powered journal analysis."""
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
