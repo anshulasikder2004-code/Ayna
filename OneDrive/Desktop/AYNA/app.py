@@ -1544,6 +1544,9 @@ def page_stage4():
                         nlp_scores[cond] = (nlp_scores[cond] + val) / 2
                     else:
                         nlp_scores[cond] = val
+                for cond, val in nlp_scores.items():
+                    if cond in st.session_state.condition_scores:
+                        st.session_state.condition_scores[cond] += val
             st.session_state.page = "result"
             st.rerun()
 
