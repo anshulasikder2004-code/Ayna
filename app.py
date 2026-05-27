@@ -1115,7 +1115,7 @@ def analyze_journal_gemini(text: str) -> dict:
         model = genai.GenerativeModel("gemini-1.5-flash")
         
         prompt = f"""
-You are a mental health pattern detection system. Analyze this Bengali journal text and return ONLY a JSON object with scores (0.0 to 2.0) for any of these conditions present:
+You are a mental health pattern detection system. The text may be written in Bengali script OR Romanized Bengali/Banglish (e.g. "ami onek thakte parina" = "I can't take it anymore"). Analyze accordingly and return ONLY a JSON object with scores (0.0 to 2.0) for any of these conditions present:
 anxiety, burnout, emotional_exhaustion, loneliness, chronic_stress, emotional_suppression, low_self_worth, caregiver_fatigue, social_withdrawal, emotional_numbness, depression, identity_loss, hypervigilance, perfectionism_anxiety, imposter_syndrome, emotional_dependency, grief, rage_suppression, decision_fatigue, dissociation
 
 Journal text: "{text}"
