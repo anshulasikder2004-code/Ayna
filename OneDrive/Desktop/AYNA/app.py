@@ -1550,7 +1550,7 @@ def page_stage4():
                         st.session_state.condition_scores[cond] += val
             st.session_state.page = "result"
             import time
-            time.sleep(2)
+            time.sleep(7)
             st.rerun()
     st.markdown("<p style='font-size:0.75rem; color:#B0A898; text-align:center; margin-top:0.5rem;'>লিখতে না চাইলে এড়িয়ে যেতে পারো।</p>", unsafe_allow_html=True)
 
