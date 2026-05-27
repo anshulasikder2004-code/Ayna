@@ -1113,7 +1113,7 @@ def analyze_journal_gemini(text: str) -> dict:
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.0-flash")
         
         prompt = f"""
 You are a mental health pattern detection system. The text may be written in Bengali script OR Romanized Bengali/Banglish (e.g. "ami onek thakte parina" = "I can't take it anymore"). Analyze accordingly and return ONLY a JSON object with scores (0.0 to 2.0) for any of these conditions present:
