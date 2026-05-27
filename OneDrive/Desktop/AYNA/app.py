@@ -1108,7 +1108,6 @@ POSITIVE_WORDS = ["ভালো","সুন্দর","আনন্দ","খু�
                   "ভালোবাসি","মজা","হাসি","উৎসাহ","আশা"]
 
 def analyze_journal_gemini(text: str) -> dict:
-    st.write("DEBUG: Gemini function called")
     """Gemini-powered journal analysis."""
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
@@ -1549,8 +1548,6 @@ def page_stage4():
                     if cond in st.session_state.condition_scores:
                         st.session_state.condition_scores[cond] += val
             st.session_state.page = "result"
-            import time
-            time.sleep(7)
             st.rerun()
     st.markdown("<p style='font-size:0.75rem; color:#B0A898; text-align:center; margin-top:0.5rem;'>লিখতে না চাইলে এড়িয়ে যেতে পারো।</p>", unsafe_allow_html=True)
 
