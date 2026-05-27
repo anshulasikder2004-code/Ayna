@@ -1128,7 +1128,8 @@ If no conditions detected, return: {{}}
         raw = response.text.strip()
         raw = raw.replace("```json", "").replace("```", "").strip()
         return eval(raw)
-    except Exception:
+    except Exception as e:
+        st.error(f"Gemini error: {e}")
         return {}
 
 def analyze_journal(text: str) -> dict:
