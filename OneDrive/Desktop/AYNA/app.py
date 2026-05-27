@@ -2,6 +2,7 @@ import re
 import streamlit as st
 import random
 import os
+import google.generativeai as genai
 
 
 st.set_page_config(
@@ -780,7 +781,7 @@ def page_stage1():
     captions = st.session_state.vs_captions
 
     if not st.session_state.vs_done:
-        img_path = img_path = os.path.join(os.path.dirname(__file__), "assets", "scenes", picture["file"])
+        img_path = os.path.join(os.path.dirname(__file__), "assets", "scenes", picture["file"])
         if os.path.exists(img_path):
             st.image(img_path, use_container_width=True)
         else:
@@ -1105,6 +1106,30 @@ NEGATIVE_WORDS = ["কষ্ট","ক্লান্ত","ভারী","এক�
 FIRST_PERSON = ["আমি","আমার","আমাকে","আমাতে","আমাদের"]
 POSITIVE_WORDS = ["ভালো","সুন্দর","আনন্দ","খুশি","শান্তি",
                   "ভালোবাসি","মজা","হাসি","উৎসাহ","আশা"]
+
+def analyze_journal_gemini(text: str) -> dict:
+    """Gemini-powered journal analysis."""
+    try:
+        api_key = st.secrets["GEMINI_API_KEY"]
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        
+        prompt = f"""
+You are a mental health pattern detection system. The text may be written in Bengali script OR Romanized Bengali/Banglish (e.g. "ami onek thakte parina" = "I can't take it anymore"). Analyze accordingly and return ONLY a JSON object with scores (0.0 to 2.0) for any of these conditions present:
+anxiety, burnout, emotional_exhaustion, loneliness, chronic_stress, emotional_suppression, low_self_worth, caregiver_fatigue, social_withdrawal, emotional_numbness, depression, identity_loss, hypervigilance, perfectionism_anxiety, imposter_syndrome, emotional_dependency, grief, rage_suppression, decision_fatigue, dissociation
+
+Journal text: "{text}"
+
+Return ONLY valid JSON like: {{"depression": 1.5, "anxiety": 1.0}}
+If no conditions detected, return: {{}}
+"""
+        response = model.generate_content(prompt)
+        st.toast("✅ Gemini analysis complete!")
+        raw = response.text.strip()
+        raw = raw.replace("```json", "").replace("```", "").strip()
+        return eval(raw)
+    except Exception:
+        return {}
 
 def analyze_journal(text: str) -> dict:
     """Returns condition scores from journal NLP analysis."""
@@ -1512,9 +1537,12 @@ def page_stage4():
         if st.button("Ayna Report দেখো →", type="primary", use_container_width=True):
             if journal_text.strip():
                 nlp_scores = analyze_journal(journal_text)
-                for cond, val in nlp_scores.items():
-                    if cond in st.session_state.condition_scores:
-                        st.session_state.condition_scores[cond] += val
+                gemini_scores = analyze_journal_gemini(journal_text)
+                for cond, val in gemini_scores.items():
+                    if cond in nlp_scores:
+                        nlp_scores[cond] = (nlp_scores[cond] + val) / 2
+                    else:
+                        nlp_scores[cond] = val
             st.session_state.page = "result"
             st.rerun()
 
