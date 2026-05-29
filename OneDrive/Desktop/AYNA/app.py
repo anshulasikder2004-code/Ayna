@@ -1107,30 +1107,71 @@ FIRST_PERSON = ["আমি","আমার","আমাকে","আমাতে","
 POSITIVE_WORDS = ["ভালো","সুন্দর","আনন্দ","খুশি","শান্তি",
                   "ভালোবাসি","মজা","হাসি","উৎসাহ","আশা"]
 
-def analyze_journal_gemini(text: str) -> dict:
-    """Gemini-powered journal analysis."""
+def analyze_journal_gemini(text: str, prior_signals: dict = None) -> dict:
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-2.0-flash")
-        
-        prompt = f"""
-You are a mental health pattern detection system. The text may be written in Bengali script OR Romanized Bengali/Banglish (e.g. "ami onek thakte parina" = "I can't take it anymore"). Analyze accordingly and return ONLY a JSON object with scores (0.0 to 2.0) for any of these conditions present:
+
+        prior_context = ""
+        if prior_signals:
+            top_prior = sorted(prior_signals.items(), key=lambda x: x[1], reverse=True)[:3]
+            prior_context = f"Earlier stages already detected these signals: {dict(top_prior)}. Use this as context but analyze the journal independently."
+
+        prompt = f"""You are analyzing a short personal journal entry from a Bangladeshi woman (18-40) for emotional pattern signals. The text may be Bengali script or Banglish (romanized Bengali like "ami onek thakte parina" = I can't take it anymore).
+
+{prior_context}
+
+SCORING RULES:
+- Score 0.5 = mild hint of this pattern
+- Score 1.0 = moderate, fairly clear signal  
+- Score 1.5 = strong, prominent signal
+- Only score conditions that have CLEAR textual evidence
+- Do not over-diagnose — if unsure, do not include
+
+LINGUISTIC SIGNALS TO LOOK FOR:
+- Hedging ("maybe", "I don't know", "hoyto") → anxiety, emotional_suppression
+- Absolutist words ("always", "never", "nobody", "everything") → depression, anxiety
+- High first-person singular focus → depression signal
+- Exhaustion/fatigue language → burnout, emotional_exhaustion, caregiver_fatigue
+- Isolation/alone language → loneliness, social_withdrawal
+- Suppressed anger → rage_suppression, emotional_suppression
+- Numbness/emptiness language → emotional_numbness, dissociation
+- Grief/loss language → grief, depression
+- Self-doubt language → imposter_syndrome, low_self_worth
+
+VALID CONDITIONS (only use these exact keys):
 anxiety, burnout, emotional_exhaustion, loneliness, chronic_stress, emotional_suppression, low_self_worth, caregiver_fatigue, social_withdrawal, emotional_numbness, depression, identity_loss, hypervigilance, perfectionism_anxiety, imposter_syndrome, emotional_dependency, grief, rage_suppression, decision_fatigue, dissociation
 
-Journal text: "{text}"
+Journal entry: "{text}"
 
-Return ONLY valid JSON like: {{"depression": 1.5, "anxiety": 1.0}}
-If no conditions detected, return: {{}}
-"""
+Return ONLY a valid JSON object. No explanation, no markdown, no extra text.
+Example: {{"depression": 1.0, "anxiety": 0.5}}
+If nothing clear detected: {{}}"""
+
         response = model.generate_content(prompt)
-        st.toast("✅ Gemini analysis complete!")
         raw = response.text.strip()
-        raw = raw.replace("```json", "").replace("```", "").strip()
-        return eval(raw)
+        raw = re.sub(r'```(?:json)?', '', raw).strip().strip('`')
+        
+        import json
+        try:
+            result = json.loads(raw)
+        except json.JSONDecodeError:
+            # fallback: try to extract JSON object
+            match = re.search(r'\{[^{}]*\}', raw)
+            result = json.loads(match.group()) if match else {}
+        
+        # validate — only keep known conditions, clamp scores
+        valid = {}
+        for k, v in result.items():
+            if k in CONDITIONS and isinstance(v, (int, float)):
+                valid[k] = max(0.0, min(2.0, float(v)))
+        return valid
+
     except Exception as e:
         st.error(f"Gemini error: {e}")
         return {}
+
 
 def analyze_journal(text: str) -> dict:
     """Returns condition scores from journal NLP analysis."""
@@ -1538,7 +1579,8 @@ def page_stage4():
         if st.button("Ayna Report দেখো →", type="primary", use_container_width=True):
             if journal_text.strip():
                 nlp_scores = analyze_journal(journal_text)
-                gemini_scores = analyze_journal_gemini(journal_text)
+                gemini_scores = analyze_journal_gemini(journal_text, prior_signals=st.session_state.condition_scores)
+
                 for cond, val in gemini_scores.items():
                     if cond in nlp_scores:
                         nlp_scores[cond] = (nlp_scores[cond] + val) / 2
