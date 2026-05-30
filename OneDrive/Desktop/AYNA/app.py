@@ -1583,7 +1583,7 @@ def page_stage4():
 
                 for cond, val in gemini_scores.items():
                     if cond in nlp_scores:
-                        nlp_scores[cond] = (nlp_scores[cond] + val) / 2
+                        nlp_scores[cond] = (nlp_scores[cond] * 0.4) + (val * 0.6)
                     else:
                         nlp_scores[cond] = val
                 for cond, val in nlp_scores.items():
