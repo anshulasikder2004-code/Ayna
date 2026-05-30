@@ -1111,7 +1111,7 @@ def analyze_journal_gemini(text: str, prior_signals: dict = None) -> dict:
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash-preview-05-20")
 
         prior_context = ""
         if prior_signals:
